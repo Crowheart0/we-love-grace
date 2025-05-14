@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>We Love Grace</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: url('https://source.unsplash.com/random/1920x1080/?nature');
+            background-size: cover;
+            background-position: center;
+            font-family: Arial, sans-serif;
+        }
+        
+        .container {
+            text-align: center;
+        }
+        
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        button:hover {
+            background-color: rgba(255, 255, 255, 1);
+            transform: scale(1.05);
+        }
+        
+        .message {
+            margin-top: 30px;
+            font-size: 36px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            display: none;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .counter {
+            margin-top: 15px;
+            font-size: 18px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 10px 15px;
+            border-radius: 5px;
+            display: inline-block;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="loveButton">点击这里</button>
+        <div id="counter" class="counter">已有 0 人表达爱意</div>
+        <div id="loveMessage" class="message">We Love Grace! ❤️</div>
+    </div>
+
+    <script>
+        // 初始化计数器
+        let count = localStorage.getItem('graceLoveCount') || 0;
+        count = parseInt(count);
+        document.getElementById('counter').textContent = `已有 ${count} 人表达爱意`;
+
+        document.getElementById('loveButton').addEventListener('click', function() {
+            const message = document.getElementById('loveMessage');
+            
+            // 只有当消息从隐藏变为显示时才增加计数
+            if (message.style.display !== 'block') {
+                count++;
+                localStorage.setItem('graceLoveCount', count);
+                document.getElementById('counter').textContent = `已有 ${count} 人表达爱意`;
+            }
+            
+            if (message.style.display === 'block') {
+                message.style.display = 'none';
+            } else {
+                message.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
