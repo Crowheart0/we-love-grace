@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>We Love Grace</title>
+    <link rel="stylesheet" href="/css/style.css">
     <style>
         body {
             margin: 0;
@@ -12,16 +13,18 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-image:  url("grace_background.jpg");
+            background-image: url("/images/grace_background.jpg");
             background-size: cover;
             background-position: center;
             font-family: Arial, sans-serif;
         }
-        
+
         .container {
             text-align: center;
+            width: 90%;
+            max-width: 800px;
         }
-        
+
         button {
             padding: 15px 30px;
             font-size: 18px;
@@ -31,12 +34,12 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
+
         button:hover {
             background-color: rgba(255, 255, 255, 1);
             transform: scale(1.05);
         }
-        
+
         .message {
             margin-top: 30px;
             font-size: 36px;
@@ -58,37 +61,387 @@
             display: inline-block;
             text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
         }
+
+        /* 登录和留言板样式 */
+        .login-form, .message-board {
+            margin-top: 30px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+        }
+
+        .login-form {
+            display: block;
+        }
+
+        .message-board {
+            display: none;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        .comment {
+            background-color: rgba(255, 255, 255, 0.8);
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 5px;
+            border-left: 5px solid #b19cd9;
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .comment-content {
+            margin-bottom: 10px;
+        }
+
+        .comment-media img, .comment-media video {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+
+        .media-buttons {
+            margin: 10px 0;
+        }
+
+        .emoji-picker {
+            display: none;
+            margin: 10px 0;
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .emoji {
+            font-size: 24px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .user-info {
+            color: white;
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 5px 10px;
+            border-radius: 5px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+        }
     </style>
 </head>
 <body>
+    <div class="user-info" id="userInfo"></div>
+    
     <div class="container">
         <button id="loveButton">点击这里</button>
         <div id="counter" class="counter">已有 0 人表达爱意</div>
         <div id="loveMessage" class="message">We Love Grace! ❤️</div>
+        
+        <!-- 登录表单 -->
+        <div id="loginForm" class="login-form">
+            <h2>欢迎来到 Grace 的留言板</h2>
+            <p>请先输入您的用户名</p>
+            <input type="text" id="username" placeholder="用户名" required>
+            <button id="loginButton">登录</button>
+        </div>
+        
+        <!-- 留言板 -->
+        <div id="messageBoard" class="message-board">
+            <h2>Grace 的留言板</h2>
+            <div>
+                <textarea id="commentText" placeholder="写下你的留言..."></textarea>
+                
+                <div class="media-buttons">
+                    <button id="emojiButton">添加表情</button>
+                    <input type="file" id="mediaInput" accept="image/*,video/*" style="display:none">
+                    <button id="mediaButton">添加图片/视频</button>
+                </div>
+                
+                <div id="emojiPicker" class="emoji-picker">
+                    <span class="emoji">😊</span>
+                    <span class="emoji">❤️</span>
+                    <span class="emoji">👍</span>
+                    <span class="emoji">🎉</span>
+                    <span class="emoji">🌹</span>
+                    <span class="emoji">🥰</span>
+                    <span class="emoji">😍</span>
+                    <span class="emoji">🤗</span>
+                    <span class="emoji">🐟</span>
+                </div>
+                
+                <div id="mediaPreview"></div>
+                <button id="postButton">发布留言</button>
+            </div>
+            
+            <div id="commentsContainer">
+                <!-- 留言内容将在这里动态添加 -->
+            </div>
+        </div>
     </div>
 
+    <script src="/js/main.js"></script>
     <script>
-        // 初始化计数器
-        let count = localStorage.getItem('graceLoveCount') || 0;
-        count = parseInt(count);
-        document.getElementById('counter').textContent = `已有 ${count} 人表达爱意`;
+        // API URL
+        const API_URL = '/api';
 
-        document.getElementById('loveButton').addEventListener('click', function() {
-            const message = document.getElementById('loveMessage');
-            
-            // 只有当消息从隐藏变为显示时才增加计数
-            if (message.style.display !== 'block') {
-                count++;
-                localStorage.setItem('graceLoveCount', count);
-                document.getElementById('counter').textContent = `已有 ${count} 人表达爱意`;
+        // DOM 元素
+        const loveButton = document.getElementById('loveButton');
+        const counter = document.getElementById('counter');
+        const loveMessage = document.getElementById('loveMessage');
+        const loginForm = document.getElementById('loginForm');
+        const messageBoard = document.getElementById('messageBoard');
+        const userInfo = document.getElementById('userInfo');
+        const loginButton = document.getElementById('loginButton');
+        const username = document.getElementById('username');
+        const commentText = document.getElementById('commentText');
+        const postButton = document.getElementById('postButton');
+        const commentsContainer = document.getElementById('commentsContainer');
+        const emojiButton = document.getElementById('emojiButton');
+        const emojiPicker = document.getElementById('emojiPicker');
+        const mediaButton = document.getElementById('mediaButton');
+        const mediaInput = document.getElementById('mediaInput');
+        const mediaPreview = document.getElementById('mediaPreview');
+
+        let currentUser = localStorage.getItem('graceUsername');
+        let selectedFile = null;
+
+        // 页面加载时获取爱心计数
+        async function getLoveCount() {
+            try {
+                const response = await fetch(`${API_URL}/love/count`);
+                const data = await response.json();
+                counter.textContent = `已有 ${data.count} 人表达爱意`;
+            } catch (error) {
+                console.error('获取爱心计数失败:', error);
+            }
+        }
+
+        // 增加爱心计数
+        async function incrementLoveCount() {
+            try {
+                const response = await fetch(`${API_URL}/love/increment`, {
+                    method: 'POST'
+                });
+                const data = await response.json();
+                counter.textContent = `已有 ${data.count} 人表达爱意`;
+            } catch (error) {
+                console.error('增加爱心计数失败:', error);
+            }
+        }
+
+        // 爱心按钮点击事件
+        loveButton.addEventListener('click', function() {    
+            if (loveMessage.style.display !== 'block') {
+                incrementLoveCount();
             }
             
-            if (message.style.display === 'block') {
-                message.style.display = 'none';
+            if (loveMessage.style.display === 'block') {
+                loveMessage.style.display = 'none';
             } else {
-                message.style.display = 'block';
+                loveMessage.style.display = 'block';
             }
         });
+
+        // 检查用户是否已登录
+        if (currentUser) {
+            loginForm.style.display = 'none';
+            messageBoard.style.display = 'block';
+            userInfo.style.display = 'block';
+            userInfo.textContent = `欢迎, ${currentUser} | 点击退出`;
+            loadComments();
+        }
+
+        // 登录功能
+        loginButton.addEventListener('click', function() {
+            if (username.value.trim() !== '') {
+                currentUser = username.value.trim();
+                localStorage.setItem('graceUsername', currentUser);
+                loginForm.style.display = 'none';
+                messageBoard.style.display = 'block';
+                userInfo.style.display = 'block';
+                userInfo.textContent = `欢迎, ${currentUser} | 点击退出`;
+                loadComments();
+            } else {
+                alert('请输入用户名');
+            }
+        });
+
+        // 退出登录
+        userInfo.addEventListener('click', function() {
+            localStorage.removeItem('graceUsername');
+            currentUser = null;
+            loginForm.style.display = 'block';
+            messageBoard.style.display = 'none';
+            userInfo.style.display = 'none';
+            username.value = '';
+        });
+
+        // 表情选择器
+        emojiButton.addEventListener('click', function() {
+            emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        // 添加表情
+        document.querySelectorAll('.emoji').forEach(emoji => {
+            emoji.addEventListener('click', function() {
+                commentText.value += this.textContent;
+                emojiPicker.style.display = 'none';
+            });
+        });
+
+        // 添加媒体
+        mediaButton.addEventListener('click', function() {
+            mediaInput.click();
+        });
+
+        mediaInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                
+                // 文件大小限制
+                if (file.type.startsWith('image/') && file.size > 5 * 1024 * 1024) {
+                    alert('图片大小不能超过5MB');
+                    return;
+                }
+                
+                if (file.type.startsWith('video/') && file.size > 20 * 1024 * 1024) {
+                    alert('视频大小不能超过20MB');
+                    return;
+                }
+                
+                selectedFile = file;
+                
+                // 预览媒体
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (file.type.startsWith('image/')) {
+                        mediaPreview.innerHTML = `<img src="${e.target.result}" style="max-width:100%;max-height:200px">`;
+                    } else if (file.type.startsWith('video/')) {
+                        mediaPreview.innerHTML = `<video controls style="max-width:100%;max-height:200px"><source src="${e.target.result}"></video>`;
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 发布留言
+        postButton.addEventListener('click', async function() {
+            if (!commentText.value.trim() && !selectedFile) {
+                alert('请输入留言内容或添加媒体文件');
+                return;
+            }
+            
+            try {
+                const formData = new FormData();
+                formData.append('username', currentUser);
+                formData.append('content', commentText.value.trim());
+                
+                if (selectedFile) {
+                    formData.append('media', selectedFile);
+                }
+                
+                const response = await fetch(`${API_URL}/comments`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    // 重置输入区域
+                    commentText.value = '';
+                    selectedFile = null;
+                    mediaPreview.innerHTML = '';
+                    
+                    // 重新加载留言
+                    await loadComments();
+                } else {
+                    alert('发布留言失败');
+                }
+            } catch (error) {
+                console.error('发布留言失败:', error);
+                alert('发布留言失败，请重试');
+            }
+        });
+
+        // 加载留言
+        async function loadComments() {
+            try {
+                const response = await fetch(`${API_URL}/comments`);
+                const comments = await response.json();
+                
+                commentsContainer.innerHTML = '';
+                
+                comments.forEach(comment => {
+                    const date = new Date(comment.timestamp);
+                    const formattedDate = `${date.getFullYear()}-${(date.getMonth()+1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+                    
+                    let mediaElement = '';
+                    if (comment.mediaUrl) {
+                        if (comment.mediaType === 'image') {
+                            mediaElement = `<div class="comment-media"><img src="${comment.mediaUrl}" alt="用户上传图片"></div>`;
+                        } else if (comment.mediaType === 'video') {
+                            mediaElement = `<div class="comment-media"><video controls><source src="${comment.mediaUrl}"></video></div>`;
+                        }
+                    }
+                    
+                    const commentElement = document.createElement('div');
+                    commentElement.className = 'comment';
+                    commentElement.innerHTML = `
+                        <div class="comment-header">
+                            <span>${comment.username}</span>
+                            <span>${formattedDate}</span>
+                        </div>
+                        <div class="comment-content">${comment.content}</div>
+                        ${mediaElement}
+                    `;
+                    
+                    commentsContainer.appendChild(commentElement);
+                });
+            } catch (error) {
+                console.error('加载留言失败:', error);
+            }
+        }
+
+        // 页面加载时获取爱心计数
+        getLoveCount();
     </script>
 </body>
 </html>
+{
+  "name": "we-love-grace",
+  "version": "1.0.0",
+  "description": "Grace 的动态网站",
+  "main": "server/server.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "cors": "^2.8.5",
+    "dotenv": "^10.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^6.0.12",
+    "multer": "^1.4.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.14"
+  }
+}
