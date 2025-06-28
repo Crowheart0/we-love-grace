@@ -8,7 +8,19 @@
       <LoveButton @love-clicked="handleLoveClick" :count="loveCount" />
       <div v-if="showLoveMessage" class="message">We Love Grace! ❤️</div>
       
-      <LoginForm v-if="!currentUser" @login="handleLogin" />
+      <div v-if="!currentUser">
+        <LoginForm 
+          v-if="showLogin" 
+          @login="handleLogin" 
+          @switch-to-register="showLogin = false"
+        />
+        <RegisterForm 
+          v-else 
+          @register-success="handleRegisterSuccess" 
+          @switch-to-login="showLogin = true"
+        />
+      </div>
+      
       <MessageBoard v-else :user="currentUser" />
     </div>
   </div>
@@ -17,6 +29,7 @@
 <script>
 import LoveButton from './components/LoveButton.vue'
 import LoginForm from './components/LoginForm.vue'
+import RegisterForm from './components/RegisterForm.vue'
 import MessageBoard from './components/MessageBoard.vue'
 import { ref, onMounted } from 'vue'
 import { incrementLove, getLoveCount } from './services/api.js'
@@ -26,12 +39,14 @@ export default {
   components: {
     LoveButton,
     LoginForm,
+    RegisterForm,
     MessageBoard
   },
   setup() {
     const currentUser = ref(localStorage.getItem('graceUsername'))
     const loveCount = ref(0)
     const showLoveMessage = ref(false)
+    const showLogin = ref(true) // 控制显示登录还是注册表单
     
     const loadLoveCount = async () => {
       try {
@@ -57,6 +72,12 @@ export default {
       localStorage.setItem('graceUsername', username)
     }
     
+    const handleRegisterSuccess = (user) => {
+      currentUser.value = user.username
+      localStorage.setItem('graceUsername', user.username)
+      showLogin.value = true // 注册成功后重置为登录状态
+    }
+    
     const logout = () => {
       localStorage.removeItem('graceUsername')
       currentUser.value = null
@@ -70,8 +91,11 @@ export default {
       currentUser,
       loveCount,
       showLoveMessage,
+      showLogin,
+      loadLoveCount,
       handleLoveClick,
       handleLogin,
+      handleRegisterSuccess,
       logout
     }
   }

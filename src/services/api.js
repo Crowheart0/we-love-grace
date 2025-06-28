@@ -64,3 +64,51 @@ export async function postComment({ username, content, media }) {
     throw error
   }
 }
+
+// 用户注册
+export async function registerUser(username) {
+  try {
+    const response = await fetch(`${API_URL}/users/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username })
+    })
+    
+    const data = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(data.error || '注册失败')
+    }
+    
+    return data
+  } catch (error) {
+    console.error('用户注册失败:', error)
+    throw error
+  }
+}
+
+// 用户登录
+export async function loginUser(username) {
+  try {
+    const response = await fetch(`${API_URL}/users/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username })
+    })
+    
+    const data = await response.json()
+    
+    if (!response.ok) {
+      throw new Error(data.error || '登录失败')
+    }
+    
+    return data
+  } catch (error) {
+    console.error('用户登录失败:', error)
+    throw error
+  }
+}

@@ -1,21 +1,21 @@
 <template>
-  <div class="login-form">
-    <h2>欢迎来到 Grace 的留言板</h2>
-    <p>请输入您的用户名登录</p>
+  <div class="register-form">
+    <h2>注册新用户</h2>
+    <p>请输入您的用户名进行注册</p>
     <input 
       v-model="username" 
       type="text" 
-      placeholder="用户名" 
-      @keyup.enter="handleLogin"
+      placeholder="用户名（2-50个字符）" 
+      @keyup.enter="handleRegister"
       :disabled="isLoading"
       required
     >
     <div class="button-group">
-      <button @click="handleLogin" :disabled="isLoading">
-        {{ isLoading ? '登录中...' : '登录' }}
+      <button @click="handleRegister" :disabled="isLoading">
+        {{ isLoading ? '注册中...' : '注册' }}
       </button>
-      <button @click="$emit('switch-to-register')" class="secondary">
-        没有账号？去注册
+      <button @click="$emit('switch-to-login')" class="secondary">
+        已有账号？去登录
       </button>
     </div>
     <div v-if="errorMessage" class="error-message">
@@ -26,19 +26,19 @@
 
 <script>
 import { ref } from 'vue'
-import { loginUser } from '../services/api.js'
+import { registerUser } from '../services/api.js'
 
 export default {
-  name: 'LoginForm',
-  emits: ['login', 'switch-to-register'],
+  name: 'RegisterForm',
+  emits: ['register-success', 'switch-to-login'],
   setup(props, { emit }) {
     const username = ref('')
     const isLoading = ref(false)
     const errorMessage = ref('')
     
-    const handleLogin = async () => {
-      if (username.value.trim() === '') {
-        errorMessage.value = '请输入用户名'
+    const handleRegister = async () => {
+      if (username.value.trim().length < 2) {
+        errorMessage.value = '用户名至少需要2个字符'
         return
       }
       
@@ -46,8 +46,8 @@ export default {
       errorMessage.value = ''
       
       try {
-        const result = await loginUser(username.value.trim())
-        emit('login', result.user.username)
+        const result = await registerUser(username.value.trim())
+        emit('register-success', result.user)
         username.value = ''
       } catch (error) {
         errorMessage.value = error.message
@@ -60,14 +60,14 @@ export default {
       username,
       isLoading,
       errorMessage,
-      handleLogin
+      handleRegister
     }
   }
 }
 </script>
 
 <style scoped>
-.login-form {
+.register-form {
   margin-top: 30px;
   background-color: rgba(255, 255, 255, 0.9);
   padding: 20px;
@@ -75,12 +75,12 @@ export default {
   text-align: left;
 }
 
-.login-form h2 {
+.register-form h2 {
   color: #e91e63;
   margin-bottom: 10px;
 }
 
-.login-form input {
+.register-form input {
   width: 100%;
   padding: 10px;
   margin: 10px 0;
@@ -96,7 +96,7 @@ export default {
   margin-top: 15px;
 }
 
-.login-form button {
+.register-form button {
   flex: 1;
   padding: 10px 20px;
   background-color: #e91e63;
@@ -108,20 +108,20 @@ export default {
   transition: background-color 0.3s;
 }
 
-.login-form button:hover:not(:disabled) {
+.register-form button:hover:not(:disabled) {
   background-color: #c2185b;
 }
 
-.login-form button:disabled {
+.register-form button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
 }
 
-.login-form button.secondary {
+.register-form button.secondary {
   background-color: #666;
 }
 
-.login-form button.secondary:hover:not(:disabled) {
+.register-form button.secondary:hover:not(:disabled) {
   background-color: #555;
 }
 

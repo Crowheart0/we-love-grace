@@ -6,6 +6,7 @@ require('dotenv').config()
 const { sequelize, testConnection } = require('./config/database')
 const loveRoutes = require('./routes/love')
 const commentRoutes = require('./routes/comments')
+const userRoutes = require('./routes/users') // 新增
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -21,6 +22,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 // API路由
 app.use('/api/love', loveRoutes)
 app.use('/api/comments', commentRoutes)
+app.use('/api/users', userRoutes) // 新增
 
 // 健康检查端点
 app.get('/health', (req, res) => {
